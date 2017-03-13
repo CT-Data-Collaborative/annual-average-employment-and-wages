@@ -1,6 +1,7 @@
 library(dplyr)
 library(datapkg)
 library(readxl)
+
 ##################################################################
 #
 # Processing Script for Annual-Average-Employment-and-Wages
@@ -8,8 +9,6 @@ library(readxl)
 # On 03/08/2017
 #
 ##################################################################
-
-#Updating processing steps, recreating concatenated file for 2004-2015
 
 #Setup environment
 sub_folders <- list.files()
@@ -26,7 +25,9 @@ round_up = function(x) trunc(x+0.5)
 town_path <- file.path(path, "town")
 town_xls <- dir(town_path, pattern = "Town")
 
+#Create empty data frame
 all_towns <- data.frame(stringsAsFactors = F)
+
 for (i in 1:length(town_xls)) {
   current_file <- (read_excel(paste0(town_path, "/", town_xls[i]), sheet=1, skip=0))
   current_file <- current_file[,c(1:7)]
@@ -47,7 +48,7 @@ for (i in 1:length(town_xls)) {
   }
   current_file <- current_file[!blankFilter & current_file$Category %in% c("Total - All Industries", "Total Government"),]
   
-  #populate blank town lines with corresponding town
+  #populate blank town rows with corresponding town
   currentTown = current_file[1,1]
   for (i in 1:nrow(current_file)) {
     if(is.na(current_file[i,1])) {
@@ -201,7 +202,7 @@ rm(list=ls(pattern="20"), all_counties, county_long, current_county_df, fips)
 
 ##State Data#####################################################################################################################
 
-#grabs county xls files
+#grabs state xls files
 state_path <- file.path(path, "state")
 state_xls <- dir(state_path, pattern = "CT")
 
@@ -227,7 +228,6 @@ for (i in 1:length(state_xls)) {
   current_file <- current_file[!blankFilter & current_file$Category %in% c("Statewide Total", "Total Government"),]
   #Rename all industries category
   #current_file$`Category`[which(current_file$`Category` %in% c("Statewide Total"))] <- "Total - All Industries"
-  
   
   #Select columns
   current_file <- current_file[, c("Town/County", "Category", "Number of Employers", 
@@ -281,9 +281,7 @@ annual_average_employment_and_wages$"Measure Type"[which(annual_average_employme
                                                                                                              "Annual Average Employment"))] <- "Number"
 annual_average_employment_and_wages$"Measure Type"[which(annual_average_employment_and_wages$Variable %in% c("Annual Average Wage"))] <- "US Dollars"
 
-
-
-#Fix Category column
+#Relabel Category column
 annual_average_employment_and_wages$`Category`[which(annual_average_employment_and_wages$`Category` %in% c("Total - All Industries", "Statewide Total", "County Total"))] <- "All Industries"
 annual_average_employment_and_wages$`Category`[which(annual_average_employment_and_wages$`Category` %in% c("Total Government"))] <- "Government"
 
