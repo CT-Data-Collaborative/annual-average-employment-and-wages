@@ -21,7 +21,7 @@
   }],
   "contributor": [],
   "resources": [{
-    "path": "data/data.csv",
+    "path": "data/annual_average_employment_and_wages.csv",
     "format": "csv",
     "schema": {
       "fields": [{
@@ -37,13 +37,36 @@
           "type": "string",
           "dimension": false
         }, {
+          "name": "Category",
+          "type": "string",
+          "dimension": true, 
+          "constraints": {
+            "enum": [
+              "All Industries", 
+              "Government"
+            ]
+          }           
+        }, {
           "name": "Measure Type",
           "type": "string",
-          "dimension": true
+          "dimension": true, 
+          "constraints": {
+            "enum": [
+              "Number", 
+              "US Dollars"
+            ]
+          }            
         }, {
           "name": "Variable",
           "type": "string",
-          "dimension": true
+          "dimension": true, 
+          "constraints": {
+            "enum": [
+              "Number of Employers",
+              "Annual Average Wage",
+              "Annual Average Employment"
+            ]
+          } 
         }, {
           "name": "Value",
           "type": "number",
@@ -71,12 +94,12 @@
     },
     "socrata": {
       "ckan_name": "Socrata",
-      "value": "False",,
+      "value": "False",
       "type": "string"
     },
     "socrata_url": {
       "ckan_name": "Socrata Dataset URL",
-      "value": "",,
+      "value": "",
       "type": "string"
     },
     "domain": {
@@ -102,7 +125,9 @@
     },
     "years_in_catalog": {
       "ckan_name": "Years in Catalog",
-      "value": [],
+      "value": ["2004", "2005", "2006", "2007", 
+                "2008", "2009", "2010", "2011", 
+                "2012", "2013", "2014", "2015"],
       "type": "array"
     },
     "latest_year": {
@@ -120,14 +145,79 @@
       "ckan_name": "Units",
       "value": {
         "Number": "",
-        "Percent": "%"
+        "Percent": "%", 
+        "US Dollars": "$"      
       }
     },
-    "default": {}
+    "expected_number_of_geographies": {
+      "ckan_name": "Expected Number of Unique Geographies",
+      "value": 178,
+      "type": "string"
+    },    
+    "default": {
+      "ckan_name": "Default",
+      "value": {
+        "Measure Type": "Number",
+        "Town": "Andover",
+        "Year": ["2004"],
+        "Category": ["All Industries"],
+        "Variable": ["Number of Employers"]
+      },
+      "type": "object"
+    }
   },
-  "spot_checks": [],
+  "spot_checks": [
+    {
+      "type": "$lookup",
+      "filter": {
+        "Town/County": "New London County",
+        "Year": "2014",
+        "Category": "All Industries",
+        "Variable": "Annual Average Wage",
+        "Measure Type": "US Dollars"
+      },
+      "expected": {
+        "type": "$match",
+        "number type": "int",
+        "value": 51015
+      }
+    },
+    {
+      "type": "$lookup",
+      "filter": {
+        "Town/County": "Connecticut",
+        "Year": "2006",
+        "Category": "All Industries",
+        "Variable": "Number of Employers",
+        "Measure Type": "Number"
+      },
+      "expected": {
+        "type": "$match",
+        "number type": "int",
+        "value": 112150
+      }
+    },
+    {
+      "type": "$lookup",
+      "filter": {
+        "Town/County": "Hartford",
+        "Year": "2010",
+        "Category": "Government",
+        "Variable": "Annual Average Employment",
+        "Measure Type": "Number"
+      },
+      "expected": {
+        "type": "$match",
+        "number type": "int",
+        "value": 20034
+      }
+    }
+  ],
   "dimension_groups": [
-    {"Measure Type": []},
-    {"Variable": []}
+    {"Category": ["All Industries", "Government"], 
+     "Variable": ["Number of Employers",
+                  "Annual Average Wage",
+                  "Annual Average Employment"]
+    }
   ]
 }
