@@ -9,8 +9,6 @@ import pytest
 ##################################################################
 
 
-
-
 def test_dataset_row_counts(rowcount):
     assert rowcount.actual == rowcount.expected
 
@@ -27,7 +25,7 @@ def test_schema_validation(schema_test):
 def test_schema_validation(schema):
     dimensions = [s for s in schema if s['dimension']]
     for d in dimensions:
-	assert isinstance(d["constraints"]["enum"], list)
+        assert isinstance(d["constraints"]["enum"], list)
 
 def test_domain_subdomain_validation(domain_map, domain, subdomain):
     assert domain in domain_map
