@@ -1,7 +1,8 @@
 Annual-Average-Employment-and-Wages
 
-[![Build Status](https://travis-ci.org/CT-Data-Collaborative/annual-average-employment-and-wages.svg?branch=master)](https://travis-ci.org/CT-Data-Collaborative/annual-average-employment-and-wages)
 Annual Average Employment and Wages reports several labor statistics related to employment and wage.
+
+Data Source: <http://www1.ctdol.state.ct.us/lmi/202/202_annualaverage.asp>
 
 ## License MIT
 

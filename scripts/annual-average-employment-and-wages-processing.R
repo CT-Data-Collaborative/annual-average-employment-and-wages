@@ -1,6 +1,7 @@
 library(dplyr)
 library(datapkg)
 library(readxl)
+library(gdata)
 
 ##################################################################
 #
@@ -27,28 +28,21 @@ town_xls <- dir(town_path, pattern = "Town")
 
 #Create empty data frame
 all_towns <- data.frame(stringsAsFactors = F)
-
 for (i in 1:length(town_xls)) {
-  current_file <- (read_excel(paste0(town_path, "/", town_xls[i]), sheet=1, skip=0))
+  current_file = read.xls(paste0(town_path, "/", town_xls[i]), sheet = 1, header = TRUE)  
   current_file <- current_file[,c(1:7)]
   colnames(current_file) <- c("Town/County", "NAICS Code", "Category", "Number of Employers", 
                               "Annual Average Employment", "Total Annual Wages", "Annual Average Wage")
   
   #only keep populated columns (remove blank columns)
   current_file <- current_file[ , !(names(current_file) %in% drops)]
-  #assign year
   get_year <- unique(as.numeric(unlist(gsub("[^0-9]", "", unlist(town_xls[i])), "")))
   get_year <- substr(get_year, 1, 4)
   current_file$Year <- get_year
   #only take rows we need to processing, 
   #based on whenever the "Category" column is equal to "Total - All Industries" or "Total Government"
-  blankFilter <- logical()
-  for(i in 1:nrow(current_file)) {
-    blankFilter <- append(blankFilter, all(is.na(current_file[i,])))
-  }
-  current_file <- current_file[!blankFilter & current_file$Category %in% c("Total - All Industries", "Total Government"),]
-  
-  #populate blank town rows with corresponding town
+  current_file$`Town/County`[current_file$`Town/County` == ""] <- NA
+  current_file$`Town/County` <- as.character(current_file$`Town/County`)
   currentTown = current_file[1,1]
   for (i in 1:nrow(current_file)) {
     if(is.na(current_file[i,1])) {
@@ -57,6 +51,17 @@ for (i in 1:length(town_xls)) {
       currentTown <- current_file[i,1]
     }
   }
+  current_file <- current_file[current_file$Category %in% c("Total - All Industries", "Total Government"),]
+  
+  # #populate blank town rows with corresponding town
+  # currentTown = current_file[1,1]
+  # for (i in 1:nrow(current_file)) {
+  #   if(is.na(current_file[i,1])) {
+  #     current_file[i,1] <- currentTown
+  #   } else {
+  #     currentTown <- current_file[i,1]
+  #   }
+  # }
 
   #Select columns
   current_file <- current_file[, c("Town/County", "Category", "Number of Employers", 
@@ -80,7 +85,11 @@ for (i in 1:length(town_xls)) {
   
   current_file$id <- NULL
   
-  #Round "Value" column
+  #Configure Value column
+  current_file$Value <- gsub("\\$", "", current_file$Value)
+  current_file$Value <- gsub(",", "", current_file$Value)
+
+  #Round Value column
   #makes sure 0.5 gets rounded as 1.0, transforms "*" to "NA"
   current_file$Value <- round_up(as.numeric(current_file$Value))
   #bind together
@@ -109,7 +118,6 @@ rm(all_towns, current_file, currentTown, fips)
 #grabs county xls files
 county_path <- file.path(path, "county")
 county_xls <- dir(county_path, pattern = "CNTY")
-
 
 #read in entire xls file (all sheets)
 read_excel_allsheets <- function(filename) {
@@ -150,8 +158,8 @@ for (i in 1:length(county_data)) {
   current_county_df$Year <- get_year
   
   #name columns, so they can be selected
-  colnames(current_county_df) <- c("Naics Code", "Category", "Number of Employers", "Annual Average Employment", 
-                                   "Total Annual Wages", "Annual Average Wage", "Average Weekly Wage", "Town/County", "Year")
+  colnames(current_county_df) <- c("Naics Code", "Blank", "Category", "Number of Employers", "Annual Average Employment", 
+                                   "Total Annual Wages", "Annual Average Wage", "Town/County", "Year")
   #select columns
   current_county_df <- current_county_df[,c("Category", "Number of Employers", "Annual Average Employment", 
                                             "Annual Average Wage", "Town/County", "Year")]
@@ -208,11 +216,10 @@ state_xls <- dir(state_path, pattern = "CT")
 
 all_state_years <- data.frame(stringsAsFactors = F)
 for (i in 1:length(state_xls)) {
-  current_file <- (read_excel(paste0(state_path, "/", state_xls[i]), sheet=1, skip=0))
+  current_file = read.xls(paste0(state_path, "/", state_xls[i]), sheet = 1, header = TRUE)  
   current_file <- current_file[,c(1:7)]
-  colnames(current_file) <- c("Town/County", "Category", "Number of Employers", 
-                              "Annual Average Employment", "Total Annual Wages", "Annual Average Wage", "Average Weekly Wage")
-  
+  colnames(current_file) <- c("Town/County", "Blank", "Category", "Number of Employers", 
+                              "Annual Average Employment", "Total Annual Wages", "Annual Average Wage")
   #only keep populated columns (remove blank columns)
   current_file <- current_file[ , !(names(current_file) %in% drops)]
   #assign year
@@ -221,11 +228,11 @@ for (i in 1:length(state_xls)) {
   current_file$Year <- get_year
   #only take rows we need to processing, 
   #based on whenever the "Category" column is equal to "Total - All Industries" or "Total Government"
-  blankFilter <- logical()
-  for(i in 1:nrow(current_file)) {
-    blankFilter <- append(blankFilter, all(is.na(current_file[i,])))
-  }
-  current_file <- current_file[!blankFilter & current_file$Category %in% c("Statewide Total", "Total Government"),]
+  # blankFilter <- logical()
+  # for(i in 1:nrow(current_file)) {
+  #   blankFilter <- append(blankFilter, all(is.na(current_file[i,])))
+  # }
+  current_file <- current_file[current_file$Category %in% c("Statewide Total", "Total Government"),]
   #Rename all industries category
   #current_file$`Category`[which(current_file$`Category` %in% c("Statewide Total"))] <- "Total - All Industries"
   
@@ -253,6 +260,10 @@ for (i in 1:length(state_xls)) {
   
   current_file$id <- NULL
   
+  #Configure Value column
+  current_file$Value <- gsub("\\$", "", current_file$Value)
+  current_file$Value <- gsub(",", "", current_file$Value)
+
   #Round "Value" column
   #makes sure 0.5 gets rounded as 1.0, transforms "*" to "NA"
   current_file$Value <- round_up(as.numeric(current_file$Value))
@@ -282,12 +293,14 @@ annual_average_employment_and_wages$"Measure Type"[which(annual_average_employme
 annual_average_employment_and_wages$"Measure Type"[which(annual_average_employment_and_wages$Variable %in% c("Annual Average Wage"))] <- "US Dollars"
 
 #Relabel Category column
+annual_average_employment_and_wages$`Category` <- as.character(annual_average_employment_and_wages$`Category`)
 annual_average_employment_and_wages$`Category`[which(annual_average_employment_and_wages$`Category` %in% c("Total - All Industries", "Statewide Total", "County Total"))] <- "All Industries"
 annual_average_employment_and_wages$`Category`[which(annual_average_employment_and_wages$`Category` %in% c("Total Government"))] <- "Government"
 
 #Reorder columns
 annual_average_employment_and_wages <- annual_average_employment_and_wages %>% 
-  select(`Town/County`, `FIPS`, `Year`, `Category`, `Measure Type`, `Variable`, `Value`)
+  select(`Town/County`, `FIPS`, `Year`, `Category`, `Measure Type`, `Variable`, `Value`) %>% 
+  arrange(`Town/County`, `Year`, `Category`)
 
 # Write to File
 write.table(
