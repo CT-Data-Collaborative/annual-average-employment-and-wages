@@ -2,6 +2,7 @@ library(dplyr)
 library(datapkg)
 library(readxl)
 library(gdata)
+library(tidyr)
 
 ##################################################################
 #
@@ -53,37 +54,12 @@ for (i in 1:length(town_xls)) {
   }
   current_file <- current_file[current_file$Category %in% c("Total - All Industries", "Total Government"),]
   
-  # #populate blank town rows with corresponding town
-  # currentTown = current_file[1,1]
-  # for (i in 1:nrow(current_file)) {
-  #   if(is.na(current_file[i,1])) {
-  #     current_file[i,1] <- currentTown
-  #   } else {
-  #     currentTown <- current_file[i,1]
-  #   }
-  # }
-
   #Select columns
   current_file <- current_file[, c("Town/County", "Category", "Number of Employers", 
                                    "Annual Average Employment", "Annual Average Wage", "Year")] 
   
   #Convert to long format
-  cols_to_stack <- c("Number of Employers", 
-                     "Annual Average Employment", 
-                     "Annual Average Wage")
-  
-  long_row_count = nrow(current_file) * length(cols_to_stack)
-  
-  current_file <- reshape(current_file, 
-                       varying = cols_to_stack, 
-                       v.names = "Value", 
-                       timevar = "Variable", 
-                       times = cols_to_stack, 
-                       new.row.names = 1:long_row_count,
-                       direction = "long"
-  )
-  
-  current_file$id <- NULL
+  current_file <- gather(current_file, Variable, Value, 3:5, factor_key=F)
   
   #Configure Value column
   current_file$Value <- gsub("\\$", "", current_file$Value)
@@ -174,18 +150,7 @@ for (i in 1:length(county_data)) {
 }
 
 #Convert to long format
-long_row_count = nrow(all_counties) * length(cols_to_stack)
-
-county_long <- reshape(all_counties, 
-                       varying = cols_to_stack, 
-                       v.names = "Value", 
-                       timevar = "Variable", 
-                       times = cols_to_stack, 
-                       new.row.names = 1:long_row_count,
-                       direction = "long"
-)
-
-county_long$id <- NULL
+county_long <- gather(all_counties, Variable, Value, 2:4, factor_key=F)
 
 #Round "Value" column
 #makes sure 0.5 gets rounded as 1.0, transforms "*" to "NA"
@@ -226,16 +191,7 @@ for (i in 1:length(state_xls)) {
   get_year <- unique(as.numeric(unlist(gsub("[^0-9]", "", unlist(state_xls[i])), "")))
   get_year <- get_year+2000
   current_file$Year <- get_year
-  #only take rows we need to processing, 
-  #based on whenever the "Category" column is equal to "Total - All Industries" or "Total Government"
-  # blankFilter <- logical()
-  # for(i in 1:nrow(current_file)) {
-  #   blankFilter <- append(blankFilter, all(is.na(current_file[i,])))
-  # }
   current_file <- current_file[current_file$Category %in% c("Statewide Total", "Total Government"),]
-  #Rename all industries category
-  #current_file$`Category`[which(current_file$`Category` %in% c("Statewide Total"))] <- "Total - All Industries"
-  
   #Select columns
   current_file <- current_file[, c("Town/County", "Category", "Number of Employers", 
                                    "Annual Average Employment", "Annual Average Wage", "Year")] 
@@ -243,22 +199,7 @@ for (i in 1:length(state_xls)) {
   current_file$`Town/County` <- "Connecticut"
   
   #Convert to long format
-  cols_to_stack <- c("Number of Employers", 
-                     "Annual Average Employment", 
-                     "Annual Average Wage")
-  
-  long_row_count = nrow(current_file) * length(cols_to_stack)
-  
-  current_file <- reshape(current_file, 
-                          varying = cols_to_stack, 
-                          v.names = "Value", 
-                          timevar = "Variable", 
-                          times = cols_to_stack, 
-                          new.row.names = 1:long_row_count,
-                          direction = "long"
-  )
-  
-  current_file$id <- NULL
+  current_file <- gather(current_file, Variable, Value, 3:5, factor_key=F)
   
   #Configure Value column
   current_file$Value <- gsub("\\$", "", current_file$Value)
