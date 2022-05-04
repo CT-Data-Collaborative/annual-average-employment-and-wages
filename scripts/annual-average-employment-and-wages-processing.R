@@ -246,7 +246,7 @@ annual_average_employment_and_wages <- annual_average_employment_and_wages %>%
 # Write to File
 write.table(
   annual_average_employment_and_wages,
-  file.path(getwd(), "data", "annual_average_employment_and_wages-2019.csv"),
+  file.path(getwd(), "data", "annual_average_employment_and_wages-2020.csv"),
   sep = ",",
   na = "-9999",
   row.names = F
